@@ -1,0 +1,23 @@
+name: Check
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # A still renamed or removed in omarchy leaves its loop behind without a push here.
+  schedule:
+    - cron: "17 6 * * 1"
+
+jobs:
+  stills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: omacom/omarchy
+          ref: quattro
+          path: omarchy
+          sparse-checkout: themes
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - run: bin/check omarchy

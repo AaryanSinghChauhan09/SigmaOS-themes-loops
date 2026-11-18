@@ -1,0 +1,90 @@
+#!/bin/bash
+# Each loop must play in place of exactly one still of the same name in its
+# theme, in the format docs/theming.md asks for.
+# Usage: bin/check <omarchy checkout>
+
+set -euo pipefail
+shopt -s nullglob
+
+omarchy=$(realpath "${1:?usage: bin/check <omarchy checkout>}")
+cd "$(dirname "$0")/.."
+command -v ffprobe >/dev/null || { echo "bin/check needs ffprobe, from ffmpeg" >&2; exit 1; }
+
+# One value per line; nothing at all when ffprobe cannot read the file.
+probe() {
+  ffprobe -v error -select_streams v:0 -show_entries "$1" -of default=noprint_wrappers=1:nokey=1 "$2" 2>/dev/null || true
+}
+
+failed=0
+count=0
+for loop in */*.mp4; do
+  theme=${loop%%/*}
+  stem=${loop##*/}
+  stem=${stem%.mp4}
+  problems=()
+
+  # Any case of image extension, as omarchy itself accepts.
+  stills=()
+  for still in "$omarchy/themes/$theme/backgrounds/$stem".*; do
+    case ${still,,} in
+      *.jpg | *.jpeg | *.png | *.bmp | *.webp) stills+=("$still") ;;
+    esac
+  done
+  ((${#stills[@]} == 1)) || problems+=("${#stills[@]} matching stills in themes/$theme/backgrounds")
+
+  [[ $(probe stream=codec_name "$loop") == "h264" ]] || problems+=("not H.264")
+  # Each field on a line of its own, whatever order ffprobe prints them in.
+  pictures=$(ffprobe -v error -select_streams v:0 -show_entries frame=key_frame,pict_type -of default=noprint_wrappers=1 "$loop" 2>/dev/null || true)
+  frames=$(probe stream=nb_frames "$loop")
+  read_frames=$(grep -c '^key_frame=' <<<"$pictures" || true)
+  if ((read_frames == 0)); then
+    problems+=("no frames could be read")
+  else
+    # Every frame the header promises, or the file was cut short.
+    if [[ ! $frames =~ ^[1-9][0-9]*$ ]]; then
+      problems+=("its header gives no frame count; a fragmented mp4 needs re-muxing with -movflags +faststart")
+    elif ((read_frames != frames)); then
+      problems+=("$read_frames of $frames frames could be read")
+    fi
+    # One keyframe, so a restart never waits on a second one.
+    keyframes=$(grep -c '^key_frame=1$' <<<"$pictures" || true)
+    ((keyframes == 1)) || problems+=("$keyframes keyframes, not 1")
+    ! grep -q '^pict_type=B$' <<<"$pictures" || problems+=("has B-frames")
+  fi
+  for tag in color_space color_transfer color_primaries; do
+    value=$(probe "stream=$tag" "$loop")
+    [[ -n $value && $value != "unknown" ]] || problems+=("no $tag tag")
+  done
+  duration=$(probe format=duration "$loop")
+  [[ $duration =~ ^[0-9]+(\.[0-9]+)?$ ]] && awk -v d="$duration" 'BEGIN { exit !(d <= 20) }' ||
+    problems+=("lasts ${duration:-an unknown time}, not twenty seconds or less")
+
+  if ((${#stills[@]} == 1)); then
+    size=$(probe stream=width,height "$loop" | paste -sd' ')
+    still_size=$(probe stream=width,height "${stills[0]}" | paste -sd' ')
+    if [[ $size =~ ^([0-9]+)\ ([0-9]+)$ ]]; then
+      width=${BASH_REMATCH[1]} height=${BASH_REMATCH[2]}
+      if [[ $still_size =~ ^([0-9]+)\ ([0-9]+)$ ]]; then
+        still_width=${BASH_REMATCH[1]} still_height=${BASH_REMATCH[2]}
+        ((width <= still_width && height <= still_height)) || problems+=("${width}x$height is larger than its still's ${still_width}x$still_height")
+        # The same picture, so the crop on screen doesn't change at the hand-over.
+        drift=$((height * still_width - width * still_height))
+        ((${drift#-} <= still_width)) || problems+=("${width}x$height is not its still's shape, ${still_width}x$still_height")
+      else
+        problems+=("its still's size could not be read")
+      fi
+    else
+      problems+=("its size could not be read")
+    fi
+  fi
+
+  for problem in "${problems[@]}"; do
+    echo "$loop: $problem" >&2
+    failed=1
+  done
+  ((++count))
+done
+
+((count > 0)) || { echo "no loops found" >&2; exit 1; }
+((failed == 0)) && echo "$count loops match their stills"
+exit $failed
