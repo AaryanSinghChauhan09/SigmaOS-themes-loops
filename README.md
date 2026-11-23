@@ -1,4 +1,6 @@
-# Omarchy theme loops
+# fk-omarchy-themes-loops
+
+> Forked from omacom/omarchy-themes-loops (MIT). See `SIGMAOS_FORK.md`.
 
 The live background loops for the built-in Omarchy themes: a quiet version of a theme's still that keeps moving, which OWE plays in the still's place while animations are on. They ship as the `omarchy-themes-loops` package, which installs `<theme>/<name>.mp4` here to `/usr/share/omarchy/themes/<theme>/backgrounds/loops/<name>.mp4`.
 
