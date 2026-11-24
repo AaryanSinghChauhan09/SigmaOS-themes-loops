@@ -9,3 +9,8 @@ A loop plays in place of the still with the same name in that theme's `backgroun
 `bin/check` holds every loop to the format `docs/theming.md` asks for, so the hand-over from the still and each restart stay seamless: H.264 with no B-frames, one keyframe, colour tags, twenty seconds or less, and its still's shape at no larger than its size.
 
 To add or change a loop, open a pull request here. Once it merges, cut a release tagged with the date, `vYYYY.MM.DD` (or `vYYYY.MM.DD.1` for a second one that day). [omacom/omarchy-pkgs](https://github.com/omacom/omarchy-pkgs) picks the release up and updates `omarchy-themes-loops` to it.
+## Documentation
+
+Wiki documentation is available in the SigmaOS Wiki Staging repository:
+
+- [SigmaOS Wiki Staging](https://github.com/AaryanSinghChauhan09/sigmaos-wiki-staging#SigmaOS-themes-loops) - Full Wiki documentation for all SigmaOS components
