@@ -2,7 +2,7 @@
 
 > Forked from AaryanSinghChauhan09/SigmaOS-themes-loops (MIT). See `SIGMAOS_FORK.md`.
 
-The live background loops for the built-in SigmaOS themes: a quiet version of a theme's still that keeps moving, which OWE plays in the still's place while animations are on. They ship as the `sigmaos-themes-loops` package, which installs `<theme>/<name>.mp4` here to `/usr/share/omarchy/themes/<theme>/backgrounds/loops/<name>.mp4`.
+The live background loops for the built-in SigmaOS themes: a quiet version of a theme's still that keeps moving, which OWE plays in the still's place while animations are on. They ship as the `sigmaos-themes-loops` package, which installs `<theme>/<name>.mp4` here to `/usr/share/sigmaos/themes/<theme>/backgrounds/loops/<name>.mp4`.
 
 A loop plays in place of the still with the same name in that theme's `backgrounds/` in [AaryanSinghChauhan09/SigmaOS](https://github.com/AaryanSinghChauhan09/SigmaOS), so `lumon/01-united-in-severance.mp4` belongs to `themes/lumon/backgrounds/01-united-in-severance.webp`. Its first frame is that still and its last frame leads straight back into it. See `docs/theming.md` there for how loops play.
 
